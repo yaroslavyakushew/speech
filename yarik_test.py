@@ -21,27 +21,27 @@ def listening():
         rec = KaldiRecognizer(model, 16000)
         while True:
             record = stream.read(CHUNK, exception_on_overflow=False)
-        if rec.AcceptWaveform(record) and len(record) > 0:
-            data = json.loads(rec.Result())
-            result = data.get("text", "")
-            if result:
-                last_partial = ""
-                rec.Reset()
-                stream.stop_stream()
-                stream_close()
-                audio.terminate()
+            if rec.AcceptWaveform(record) and len(record) > 0:
+                data = json.loads(rec.Result())
+                result = data.get("text", "")
+                if result:
+                    last_partial = ""
+                    rec.Reset()
+                    stream.stop_stream()
+                    stream.close()
+                    audio.terminate()
                 
-                yield f"[text] {data}"
-                break
-        else:
-            data = json.loads(rec.PartialResult()).get("partial", "")
-            now = time.time()
-            if data and data != last_partial and now - last_time > it:
-                last_partial = data
-                last_time = now
-                yield f"[partial] {data}"
+                    yield f"[text] {data}"
+                    break
+                
             
-   
-        
+            else:
+                data = json.loads(rec.PartialResult()).get("partial", "")
+                now = time.time()
+                if data and data != last_partial and now - last_time > it:
+                    last_partial = data
+                    last_time = now
+                    yield f"[partial] {data}"
+                     
 for text in listening():
     print(text)
