@@ -1,13 +1,10 @@
 from vosk import Model, KaldiRecognizer
 import pyaudio, json, time
 
-model = Model('/home/sergey/spech nano model')
-grammar = ["потужно","перемога","привіт"]
+model = Model('/home/sergey/nano eng model')
+grammar = ["потужно", "перемога", "привіт"]
 
-CHUNK=4000
-
-
-
+CHUNK = 16000
 
 def listening():
     last_partial = ""
@@ -16,32 +13,32 @@ def listening():
     
     while True:
         audio = pyaudio.PyAudio()
-        stream = audio.open(format = pyaudio.paInt16, channels=1, rate=16000, input=True, frames_per_buffer=CHUNK)
+        stream = audio.open(format=pyaudio.paInt16, channels=1, rate=16000, input=True, frames_per_buffer=2048)
         stream.start_stream()
         rec = KaldiRecognizer(model, 16000)
+        
+        
         while True:
-            record = stream.read(CHUNK, exception_on_overflow=False)
-            if rec.AcceptWaveform(record) and len(record) > 0:
+            record = stream.read(CHUNK, exception_on_overflow=False)    
+            ok = rec.AcceptWaveform(record)
+            if ok and len(record) > 0:
                 data = json.loads(rec.Result())
-                result = data.get("text", "")
-                if result:
+                text = data.get("text", "")
+                if text:
                     last_partial = ""
-                    rec.Reset()
                     stream.stop_stream()
                     stream.close()
                     audio.terminate()
-                
-                    yield f"[text] {data}"
+                    yield f"[text] {text}"
                     break
-                
-            
             else:
-                data = json.loads(rec.PartialResult()).get("partial", "")
+                partial = json.loads(rec.PartialResult()).get("partial", "")
                 now = time.time()
-                if data and data != last_partial and now - last_time > it:
-                    last_partial = data
+                if partial and last_partial != partial and now - last_time > it:
                     last_time = now
-                    yield f"[partial] {data}"
-                     
+                    last_partial = partial
+                    yield f"[partial] {partial}"
+                    
+
 for text in listening():
     print(text)
