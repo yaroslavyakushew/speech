@@ -1,8 +1,9 @@
 from vosk import Model, KaldiRecognizer 
 import pyaudio, json
 
+grammar = '["up", "down", "front", "back", "to me", "from me"]'
 model = Model('/home/sergey/nano eng model')
-rec = KaldiRecognizer(model, 16000, '["up", "down", "front", "back", "to me", "from me"]')
+rec = KaldiRecognizer(model, 16000, grammar)
 audio = pyaudio.PyAudio()
 
 CHUNK = 2048
