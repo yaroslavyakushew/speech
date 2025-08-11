@@ -25,5 +25,9 @@ for text in listening():
     print(f"[text] {text}")
     if text in keywords:
         print(f"✅ Command recognized: {text}")
+        if text == "up":
+            pass
+        if text == "down":
+            
     else:
         print("❌ Unrecognized or partial command.")
