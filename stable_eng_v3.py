@@ -33,24 +33,22 @@ def set_angle(a):
 
 def movement(SERVO_PIN, reverse):
     global angle, max_angle, stop, run
+    run = True
     time_a = 0
     stop = False
-    run = False
     if reverse == False:
         time_a = max_angle - angle
     else:
         time_a = angle
     for i in range(time_a):
-        run = True
         if stop: break
         set_angle(angle)
         if reverse == False:
             angle += 1
         else:
             angle -= 1
-        print(angle)
-        time.sleep(1)
-
+        time.sleep(0.08)
+    run = False
 # --- Command functions ---
 def up():
     movement(SERVO_PIN, True)
@@ -71,10 +69,9 @@ def from_me():
     print("from me")
 
 def stop_cmd():
-    global stop, run
+    global stop
     print("stop")
     stop = True
-    run = False
 
 # --- Keywords dictionary ---
 full_dict = {
@@ -106,7 +103,7 @@ def printing(): #For test program, when i can`t talking
 # --- Main program ---
 try:
     set_angle(angle)
-    for text in printing():
+    for text in listening():
         print(f"[text] {text}")
         text = text.lower().strip()
 
