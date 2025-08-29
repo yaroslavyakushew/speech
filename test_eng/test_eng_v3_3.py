@@ -1,8 +1,8 @@
 from vosk import Model, KaldiRecognizer 
-import pyaudio, json, difflib, pigpio, time
+import pyaudio, json, difflib, pigpio, time, threading
 
 # --- Voice grammar ---
-grammar = '["up", "down", "front", "back", "to me", "from me", "stop"]' 
+grammar = '["up", "down", "front", "back", "to me", "from me", "stop", "hand"]' 
 model = Model('/home/sergey/nano eng model')
 rec = KaldiRecognizer(model, 16000, grammar)
 
@@ -43,7 +43,7 @@ def movement(SERVO_PIN, reverse):
         else:
             angle -= 1
         print(angle)
-        time.sleep(0.01)
+        time.sleep(1)
 
 # --- Command functions ---
 def up():
@@ -95,7 +95,7 @@ try:
         print(f"[text] {text}")
         if text in keywords:
             print(f"✅ Command recognized: {text}")
-            keywords[text]()
+            threading.Thread(target=keywords[text], args=()).start()
         else:
             # Fix: provide possibilities argument
             match = difflib.get_close_matches(text, keywords.keys(), n=1, cutoff=0.6)

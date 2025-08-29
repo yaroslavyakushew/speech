@@ -1,5 +1,5 @@
 from vosk import Model, KaldiRecognizer 
-import pyaudio, json, difflib, pigpio, time
+import pyaudio, json, difflib, pigpio, time, threading
 
 # --- Voice grammar ---
 grammar = '["up", "down", "front", "back", "to me", "from me", "stop", "hand"]'  
@@ -14,6 +14,8 @@ CHUNK = 2048
 SERVO_PIN = 14
 angle = 0
 max_angle = 150
+stop = False
+run = False
 
 stream = audio.open(
     format=pyaudio.paInt16,
@@ -30,20 +32,24 @@ def set_angle(a):
     pi.set_servo_pulsewidth(SERVO_PIN, pulse_width)
 
 def movement(SERVO_PIN, reverse):
-    global angle, max_angle
+    global angle, max_angle, stop, run
     time_a = 0
+    stop = False
+    run = False
     if reverse == False:
         time_a = max_angle - angle
     else:
         time_a = angle
     for i in range(time_a):
+        run = True
+        if stop: break
         set_angle(angle)
         if reverse == False:
             angle += 1
         else:
             angle -= 1
         print(angle)
-        time.sleep(0.01)
+        time.sleep(1)
 
 # --- Command functions ---
 def up():
@@ -64,19 +70,23 @@ def to_me():
 def from_me():
     print("from me")
 
-def stop():
+def stop_cmd():
+    global stop, run
     print("stop")
+    stop = True
+    run = False
 
 # --- Keywords dictionary ---
-keywords = {
+full_dict = {
     "up": up,
     "down": down,
     "front": front,
     "back": back,
     "to me": to_me,
-    "from me": from_me,
-    "stop": stop
+    "from me": from_me
 }
+stop_dict = {"stop": stop_cmd}
+keywords = full_dict
 
 # --- Listening generator ---
 def listening():
@@ -88,14 +98,24 @@ def listening():
             if result:
                 yield result
 
+def printing(): #For test program, when i can`t talking
+    while True:
+        text = input("Type text: ")
+        if text:
+            yield text
 # --- Main program ---
 try:
     set_angle(angle)
-    for text in listening():
+    for text in printing():
         print(f"[text] {text}")
         text = text.lower().strip()
 
         found_command = None
+        
+        if run == True:
+            keywords = stop_dict
+        else:
+            keywords = full_dict
 
         # 1. Check multi-word commands first
         for cmd in ["to me", "from me"]:
@@ -121,11 +141,14 @@ try:
                     break
 
         # 4. Execute command if found
+        
         if found_command:
             print(f"✅ Command recognized: {found_command}")
-            keywords[found_command]()
+            threading.Thread(target=keywords[found_command], args=()).start()     
         else:
             print("❌ Unrecognized or partial command.")
+        
+        
 
 finally:
     pi.set_servo_pulsewidth(SERVO_PIN, 0)

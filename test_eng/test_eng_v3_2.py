@@ -50,8 +50,7 @@ def stop():
     print("stop")
     
  
-
-
+           
 def listening():
     while True:
         record = stream.read(CHUNK, exception_on_overflow=False)
@@ -60,6 +59,7 @@ def listening():
             result = data.get("text", "")
             if result:
                 yield result
+                
 
 keywords = {"up": up, "down": down, "front": front, "back": back, "to me": to_me, "from me": from_me, "stop": stop} #Сюда добавлять команды
 
@@ -73,7 +73,7 @@ try:
         
             
         else:
-            match = difflib.get_close_matches(text, n=1, cutoff=0.6) #Ця частина має проблеми
+            match = difflib.get_close_matches(text, keywords.keys(), n=1, cutoff=0.6) #Ця частина має проблеми
             if match:
                 print(f"✅ Command recognized: {text}")
                 keywords[match[0]]()
