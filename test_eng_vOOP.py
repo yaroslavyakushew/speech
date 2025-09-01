@@ -26,17 +26,57 @@ stream = audio.open(
 )
 stream.start_stream()
 
+def movement(SERVO_PIN, angle1, reverse):
+    global stop, run
+    run = True
+    time_a = 0
+    stop = False
+    if reverse == False:
+        time_a = max_angle - angle1
+    else:
+        time_a = angle1
+    for i in range(time_a):
+        if stop: break
+        set_angle(angle1, SERVO_PIN)
+        if reverse == False:
+            angle1 += 1
+        else:
+            angle1 -= 1
+        time.sleep(0.08)
+    run = False
+
 
 class Test:
-    def __init__(self, SERVO_PIN1, angle, max_angle):
-        self.angle = angle
-        self.max_angle = max_angle
+    def __init__(self, SERVO_PIN1, angle1, max_angle1):
+        self.angle1 = angle
+        self.max_angle1 = max_angle1
         self.SERVO_PIN1 = SERVO_PIN1
-    def up():
-        movement(SERVO_PIN1, self.angle, True)
+    
+    
+    def movement(self, SERVO_PIN1, angle1, reverse):
+        global stop, run
+        run = True
+        time_a = 0
+        stop = False
+        if reverse == False:
+            time_a = self.max_angle1 - self.angle1
+        else:
+            time_a = self.angle1
+        for i in range(time_a):
+            if stop: break
+            set_angle(self.angle1, self.SERVO_PIN1)
+            if reverse == False:
+                self.angle1 += 1
+            else:
+                self.angle1 -= 1
+            time.sleep(0.08)
+        run = False
+        
+    def up(self):
+        self.movement(self.SERVO_PIN1, self.angle1, True)
 
-    def down():
-        movement(SERVO_PIN1, self.angle, False)
+    def down(self):
+        self.movement(self.SERVO_PIN1, self.angle1, False)
 
     
 classList = []
@@ -47,24 +87,6 @@ def set_angle(a, SERVO_PIN):
         pulse_width = 500 + (a/180.0) * 2000
         pi.set_servo_pulsewidth(SERVO_PIN, pulse_width)
         
-def movement(SERVO_PIN, angle1, reverse):
-    global stop, run
-    run = True
-    time_a = 0
-    stop = False
-    if reverse == False:
-        time_a = max_angle - angle
-    else:
-        time_a = angle
-    for i in range(time_a):
-        if stop: break
-        set_angle(angle, SERVO_PIN)
-        if reverse == False:
-            angle += 1
-        else:
-            angle -= 1
-        time.sleep(0.08)
-    run = False
 
 # --- Command functions ---
 def hand(list1):
@@ -74,8 +96,7 @@ def hand(list1):
             SERVO_PIN = obj.SERVO_PIN1
             angle = obj.angle
 def up(list1):
-    for Cls in list1:
-        obj = Cls()
+    for obj in list1:
         if obj.SERVO_PIN1 == SERVO_PIN:
             obj.up()
     
@@ -83,7 +104,6 @@ def down(list1):
     for obj in list1:
         if obj.SERVO_PIN1 == SERVO_PIN:
             obj.down()
-    movement(SERVO_PIN, angle, False)
 def front(list1):
     print("front to 60 degrees")
 
@@ -172,8 +192,8 @@ try:
         
         if found_command:
             print(f"✅ Command recognized: {found_command}")
-            threading.Thread(target=keywords[found_command], args=(classList)).start()
-            print(angle)
+            threading.Thread(target=keywords[found_command], args=(classList, )).start()
+            print(test1.angle1)
         else:
             print("❌ Unrecognized or partial command.")
         
