@@ -1,5 +1,5 @@
 from vosk import Model, KaldiRecognizer 
-import pyaudio, json, difflib, pigpio, time, threading
+import pyaudio, json, difflib, pigpio, time, threading, serial
 
 # --- Voice grammar ---
 grammar = '["up", "down", "front", "back", "to me", "from me", "stop", "hand"]'  
@@ -8,6 +8,7 @@ rec = KaldiRecognizer(model, 16000, grammar)
 
 audio = pyaudio.PyAudio()
 pi = pigpio.pi()
+ 
 
 # --- Servo setup ---
 CHUNK = 2048
