@@ -1,13 +1,19 @@
 from vosk import Model, KaldiRecognizer 
-import pyaudio, json, difflib, pigpio, time, threading, serial
+import pyaudio, json, difflib, pigpio, time, threading
+import serial
+from serial import Serial
 
 # --- Voice grammar ---
-grammar = '["up", "down", "front", "back", "to me", "from me", "stop", "hand"]'  
-model = Model('/home/sergey/nano eng model')
+grammar = '["up", "down", "front", "back", "to me", "from me", "stop", "hand"]'
+raspberry_way = '/home/sergey/nano eng model'
+linux_way = "/home/thrashir/speech small model"
+model = Model(linux_way)
 rec = KaldiRecognizer(model, 16000, grammar)
+port = "/dev/ttyUSB0"
 
 audio = pyaudio.PyAudio()
 pi = pigpio.pi()
+arduino = serial.Serial(port, 9600, timeout=1)
  
 
 # --- Servo setup ---
@@ -71,7 +77,7 @@ class Test:
         for i in range(time_a):
             if stop: break
             if reverse == False:
-                self.angle1 += 1
+                arduino.sent
             else:
                 self.angle1 -= 1
             self.set_angle(self.angle1, self.SERVO_PIN1)
@@ -154,7 +160,7 @@ try:
     test1 = Test(14, 0, 150, 0, 0.08)
     classList.insert(0, test1)
     test1.set_angle(test1.min_angle, SERVO_PIN)
-    for text in listening():
+    for text in printing():
         print(f"[text] {text}")
         text = text.lower().strip()
 
