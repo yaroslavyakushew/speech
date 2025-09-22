@@ -5,9 +5,9 @@ import pyaudio, json, difflib, time, threading, serial
 grammar = '["up", "down", "front", "back", "to me", "from me", "stop", "hand"]'
 raspberry_way = '/home/sergey/nano eng model'
 linux_way = "/home/thrashir/speech small model"
-model = Model(linux_way)
+model = Model(raspberry_way)
 rec = KaldiRecognizer(model, 16000, grammar)
-usb_port = "/dev/ttyUSB1"
+usb_port = "/dev/ttyUSB0"
 
 audio = pyaudio.PyAudio()
 arduino = serial.Serial(usb_port, 9600, timeout=1)
@@ -82,7 +82,7 @@ def printing(): #For test program, when i can`t talking
             yield text
 # --- Main program ---
 
-for text in listening():
+for text in printing():
     print(f"[text] {text}")
     text = text.lower().strip()
 

@@ -26,6 +26,7 @@ stream = audio.open(
 )
 stream.start_stream()
 
+#ПЕРЕНЕСТИ В C++ (частково перенесено)
 def movement(SERVO_PIN, angle1, reverse):
     global stop, run
     run = True
