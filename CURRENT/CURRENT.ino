@@ -11,6 +11,9 @@
 */
 
 #include <Servo.h>
+bool stop1 = false;
+bool run1 = false;
+int currentServo = 0;
 
 // Servo classes to match Python structure
 class ServoController {
@@ -47,6 +50,7 @@ class ServoController {
     
     void moveServo(bool reverse) {
       int time_a;
+      run1 = true;
       if (!reverse) {
         time_a = maxAngle - currentAngle;
       } else {
@@ -54,6 +58,7 @@ class ServoController {
       }
       
       for (int i = 0; i < time_a; i++) {
+        if stop1: break
         if (reverse) {
           currentAngle -= 1;
         } else {
@@ -62,6 +67,7 @@ class ServoController {
         setAngle(currentAngle);
         delay(delayTime * 1000); // Convert seconds to milliseconds
       }
+      run1 = false;
     }
     
     void up() {
@@ -85,9 +91,14 @@ ServoController guohu(12, 150, 0, 0.08);
 const int NUM_SERVOS = 6;
 ServoController* servoList[NUM_SERVOS] = {&kleshnya, &kist_rotary, &kist_bend, &shoulder, &collarbone, &guohu};
 
-bool stop = false;
-bool run = false;
-
+void up (){
+    for (auto &obj: servoList){
+        if (currentServo == obj.pin){
+          obj.up();
+       }
+    }
+  }
+  
 void setup() {
   // Attach all servos
   for (int i = 0; i < NUM_SERVOS; i++) {

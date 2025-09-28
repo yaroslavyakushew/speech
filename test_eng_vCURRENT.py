@@ -5,12 +5,12 @@ import pyaudio, json, difflib, time, threading, serial
 grammar = '["up", "down", "front", "back", "to me", "from me", "stop", "hand"]'
 raspberry_way = '/home/sergey/nano eng model'
 linux_way = "/home/thrashir/speech small model"
-model = Model(raspberry_way)
+model = Model(linux_way)
 rec = KaldiRecognizer(model, 16000, grammar)
-usb_port = "/dev/ttyUSB0"
+#usb_port = "/dev/ttyUSB0"
 
 audio = pyaudio.PyAudio()
-arduino = serial.Serial(usb_port, 9600, timeout=1)
+#arduino = serial.Serial(usb_port, 9600, timeout=1)
 
 # --- Servo setup ---
 CHUNK = 2048
@@ -32,25 +32,25 @@ stream.start_stream()
 
 
 def up():
-    arduino.write(b"Potuzhno!!!!\n")
+    print("ok\n")
 
 def down():
-    arduino.write(b"Down!\n")
+    print("okr\n")
 def front():
-    print("front to 60 degrees")
+    print("front to 60 degrees\n")
 
 def back():
-    print("back")
+    print("back\n")
 
 def to_me():
-    print("to me")
+    print("to me\n")
 
 def from_me():
-    print("from me")
+    print("from me\n")
 
 def stop_cmd():
     global stop
-    print("stop")
+    print("stop\n")
     stop = True
 
 # --- Keywords dictionary ---
@@ -86,7 +86,7 @@ for text in printing():
     print(f"[text] {text}")
     text = text.lower().strip()
 
-    found_command = None
+    found_commands = []
         
     if run == True:
         keywords = stop_dict
@@ -96,31 +96,31 @@ for text in printing():
     # 1. Check multi-word commands first
     for cmd in ["to me", "from me"]:
         if cmd in text:
-            found_command = cmd
+            found_commands.append(cmd)
             break
 
     # 2. Check single-word commands
-    if not found_command:
+    if len(found_commands) == 0:
         words = text.split()
         for word in words:
             if word in keywords:
-                found_command = word
-                break
+                found_commands.append(word)
+                
 
     # 3. Fuzzy matching (per word)
-    if not found_command:
+    if len(found_commands) == 0:
         words = text.split()
         for word in words:
             match = difflib.get_close_matches(word, keywords.keys(), n=1, cutoff=0.7)
             if match:
-                found_command = match[0]
-                break
+                found_commands.append(match[0])
 
     # 4. Execute command if found
-        
-    if found_command:
-        print(f"✅ Command recognized: {found_command}")
-        threading.Thread(target=keywords[found_command], args=()).start()     
-    else:
+    for command in found_commands:
+        if command in keywords:
+            print(f"✅ Command recognized: {command}")
+            threading.Thread(target=keywords[command], args=()).start()     
+    
+    if len(found_commands) == 0:
         print("❌ Unrecognized or partial command.")
         
