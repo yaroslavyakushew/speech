@@ -13,11 +13,11 @@
 #include <Servo.h>
 bool stop1 = false;
 bool run1 = false;
-int currentServo = 0;
+int currentServo = 4;
 
 // Servo classes to match Python structure
 class ServoController {
-  private:
+  public:
     Servo servo;
     int pin;
     int currentAngle;
@@ -58,7 +58,7 @@ class ServoController {
       }
       
       for (int i = 0; i < time_a; i++) {
-        if stop1: break
+        if (stop1) {break;}
         if (reverse) {
           currentAngle -= 1;
         } else {
@@ -87,14 +87,14 @@ ServoController shoulder(0, 150, 0, 0.08);
 ServoController collarbone(14, 150, 0, 0.08);
 ServoController guohu(12, 150, 0, 0.08);
 
-// Create a list of servo controllers
+// Create a list of servo {controllers
 const int NUM_SERVOS = 6;
 ServoController* servoList[NUM_SERVOS] = {&kleshnya, &kist_rotary, &kist_bend, &shoulder, &collarbone, &guohu};
 
 void up (){
-    for (auto &obj: servoList){
-        if (currentServo == obj.pin){
-          obj.up();
+    for (auto obj: servoList){
+        if (currentServo == obj->pin){
+          obj->up();
        }
     }
   }
@@ -112,7 +112,6 @@ void setup() {
 }
 
 void loop() {
-  // Main loop can be used for receiving commands from Python
-  // via Serial communication if needed
+  up();
   delay(100);
 }
