@@ -2,7 +2,7 @@ from vosk import Model, KaldiRecognizer
 import pyaudio, json, difflib, time, threading, serial, sys
 
 # --- Voice grammar ---
-grammar = '["up", "down", "front", "back", "to me", "from me", "stop", "hand", "exit"]'
+grammar = '["up", "down", "left", "right", "to me", "from me", "stop", "base", "exit", "arm up", "arm down", "elbow", "hand", "brush", "inner elbow", "shoulder"]'
 #raspberry_way = '/home/sergey/nano eng model'
 windows_way = 'C:/Users/Student/Downloads/CURRENT1/nano eng model'
 
@@ -34,13 +34,18 @@ def writing(text):
     run = True
     arduino.write(text.encode())
 
+def changePin(text):
+    arduino.write(text.encode())
+
+
 def readArduino():
     try:
-        global run
+        global run, keywords
         while not stopThread.is_set():
             line = arduino.readline().decode('utf-8').strip()
-            if line == "run false":
+            if (line == "run false"):
                 run = False
+                keywords = full_dict
         time.sleep(0.1)
     except Exception as e:
         print("where arduino?")
@@ -49,23 +54,21 @@ stopThread = threading.Event()
 arduinoThread = threading.Thread(target=readArduino, daemon=False)
 arduinoThread.start()
 
-def up():
-    writing("up\n")
+def all_up(): writing("arm up\n")
+def all_down(): writing("arm down\n")
+def elbow(): changePin("elbow\n")
+def hand(): changePin("hand\n")
+def brush(): changePin("brush\n")
+def innerElbow(): changePin("inner elbow\n")
+def shoulder(): changePin("shoulder\n")
+def base(): c  n("collarbone\n")
+def up(): writing("up\n")
+def down():writing("down\n")
+def left(): writing("left\n")
+def right(): writing("right\n")
+def to_me():print(" to me\n")
+def from_me():print("from me\n")
 
-def down():
-    writing("down\n")
-
-def front():
-    print("front to 60 degrees\n")
-
-def back():
-    print("back\n")
-
-def to_me():
-    print("to me\n")
-
-def from_me():
-    print("from me\n")
 
 def stop_cmd():
     global run
@@ -83,14 +86,23 @@ def exit1():
 
 # --- Keywords dictionary ---
 full_dict = {
+"arm down": all_down,
+"arm up": all_up,
+"base": base,
+"elbow": elbow,
+"hand": hand,
+"brush": brush,
+"inner elbow": innerElbow,
+"shoulder": shoulder,
     "up": up,
     "down": down,
-    "front": front,
-    "back": back,
+    "left": left,
+    "right": right,
     "to me": to_me,
     "from me": from_me,
     "exit": exit1
 }
+
 stop_dict = {"stop": stop_cmd}
 keywords = full_dict
 
@@ -122,27 +134,14 @@ for text in listening():
     else:
         keywords = full_dict
 
-    # 1. Check multi-word commands first
-    for cmd in ["to me", "from me"]:
-        if cmd in text:
-            found_commands.append(cmd)
-            break
 
-    # 2. Check single-word commands
-    if len(found_commands) == 0:
-        words = text.split()
-        for word in words:
-            if word in keywords:
-                found_commands.append(word)
-                
 
-    # 3. Fuzzy matching (per word)
-    if len(found_commands) == 0:
-        words = text.split()
-        for word in words:
-            match = difflib.get_close_matches(word, keywords.keys(), n=1, cutoff=0.7)
-            if match:
-                found_commands.append(match[0])
+    if len(found_commands) <= 1:
+        for key in sorted(keywords, key=lambda k: (-len(k.split()), -len(k))):
+            key_l = key.lower()
+            if key_l in text:
+                found_commands.append(key)
+                text = text.replace(key_l, " ")
 
     # 4. Execute command if found
     for command in found_commands:
