@@ -1,11 +1,11 @@
 from vosk import Model, KaldiRecognizer 
-import pyaudio, json, difflib, time, threading, serial, sys
+import pyaudio, json, difflib, time, threading, serial, sys, os
 
 # --- Voice grammar ---
-grammar = '["up", "down", "exit", stop]
-all_way = "~/speech/nano eng model"
+grammar = '["up", "down", "exit", "stop"]'
+all_way = "~/speech/model"
 
-model = Model(all_way)
+model = Model(os.path.expanduser(all_way))
 rec = KaldiRecognizer(model, 16000, grammar)
 usb_port = "COM7"
 
