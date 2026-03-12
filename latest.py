@@ -1,17 +1,23 @@
-from vosk import Model, KaldiRecognizer 
+from itertools import zip_longest
+
+from vosk import Model, KaldiRecognizer
 import pyaudio, json, difflib, time, threading, serial, sys
 
 # --- Voice grammar ---
-grammar = '["up", "down", "left", "right", "to me", "from me", "stop", "base", "exit", "arm up", "arm down", "elbow", "hand", "brush", "inner elbow", "shoulder"]'
+globalGrammar = '["up", "down", "left", "right", "to me", "from me", "stop", "base", "exit", "arm up", "arm down", "elbow", "hand", "brush", "inner elbow", "shoulder"]'
+commands = ["up", "down", "left", "right", "exit", "from me", "to me", "stop", "arm up", "arm down"]
+handParts = ["base", "hand", "elbow", "brush", "inner elbow", "shoulder"]
+#Хуево подтягиваются слова из словарей
+
 #raspberry_way = '/home/sergey/nano eng model'
-windows_way = 'C:/Users/Student/Downloads/CURRENT1/nano eng model'
+windows_way = 'C:/Users/Student/speech/nano eng model'
 
 model = Model(windows_way)
-rec = KaldiRecognizer(model, 16000, grammar)
+rec = KaldiRecognizer(model, 16000, globalGrammar)
 usb_port = "COM7"
 
 audio = pyaudio.PyAudio()
-arduino = serial.Serial(usb_port, 9600, timeout=1)
+#arduino = serial.Serial(usb_port, 9600, timeout=1)
 
 # --- Servo setup ---
 CHUNK = 2048
@@ -21,13 +27,13 @@ max_angle = 150
 stop = False
 run = False
 
-stream = audio.open(format=pyaudio.paInt16,
-    channels=1,
-    rate=16000,
-    input=True,
-    frames_per_buffer=CHUNK
-)
-stream.start_stream()
+# stream = audio.open(format=pyaudio.paInt16,
+#    channels=1,
+#    rate=16000,
+#    input=True,
+#    frames_per_buffer=CHUNK
+#)
+#stream.start_stream()
 
 def writing(text):
     global run
@@ -50,24 +56,13 @@ def readArduino():
     except Exception as e:
         print("where arduino?")
 
+def debug(list):
+    for i,j in list:
+        print(j)
 stopThread = threading.Event()
 arduinoThread = threading.Thread(target=readArduino, daemon=False)
 arduinoThread.start()
 
-def all_up(): writing("arm up\n")
-def all_down(): writing("arm down\n")
-def elbow(): changePin("elbow\n")
-def hand(): changePin("hand\n")
-def brush(): changePin("brush\n")
-def innerElbow(): changePin("inner elbow\n")
-def shoulder(): changePin("shoulder\n")
-def base(): c  n("collarbone\n")
-def up(): writing("up\n")
-def down():writing("down\n")
-def left(): writing("left\n")
-def right(): writing("right\n")
-def to_me():print(" to me\n")
-def from_me():print("from me\n")
 
 
 def stop_cmd():
@@ -84,29 +79,8 @@ def exit1():
     arduino.close()
     sys.exit(0)
 
-# --- Keywords dictionary ---
-full_dict = {
-"arm down": all_down,
-"arm up": all_up,
-"base": base,
-"elbow": elbow,
-"hand": hand,
-"brush": brush,
-"inner elbow": innerElbow,
-"shoulder": shoulder,
-    "up": up,
-    "down": down,
-    "left": left,
-    "right": right,
-    "to me": to_me,
-    "from me": from_me,
-    "exit": exit1
-}
 
-stop_dict = {"stop": stop_cmd}
-keywords = full_dict
-
-# --- Listening generator ---
+#--- Listening generator ---
 def listening():
     while True:
         record = stream.read(CHUNK, exception_on_overflow=False)
@@ -123,34 +97,39 @@ def printing(): #For test program, when i can`t talking
             yield text
 # --- Main program ---
 
-for text in listening():
+for text in printing():
     print(f"[text] {text}")
     text = text.lower().strip()
+    print(text)
 
     found_commands = []
-        
-    if run == True:
-        keywords = stop_dict
-    else:
-        keywords = full_dict
+    def checking():
+        words = text.split()
+       # debug(words)
+        for i, j, word in zip_longest(commands, handParts, words): # возможно проблема в зипе относительно проблемы ниже
+            print(f"I: {i}")
+            print(f"J: {j}")
+            if word == i: # Некорректная проверка, почему то слишком много аппендов
+                found_commands.append((word, "command"))
+            if word == j:
+                found_commands.append((word, "hand")) # Если передавать первым словом, остальные команды не распознаются
 
-
-
-    if len(found_commands) <= 1:
-        for key in sorted(keywords, key=lambda k: (-len(k.split()), -len(k))):
-            key_l = key.lower()
-            if key_l in text:
-                found_commands.append(key)
-                text = text.replace(key_l, " ")
+    checking()
 
     # 4. Execute command if found
-    for command in found_commands:
-        if command in keywords:
+    debug(found_commands)
+    for command, flag in found_commands:
+        if command in globalGrammar:
             print(f"✅ Command recognized: {command}")
-            if command != "exit":
-                threading.Thread(target=keywords[command], args=()).start()
+            if command != "exit" and command != "stop": #Мульти комманды некорректно обрабатываются
+                if flag == "command": # У нас может быть фраза, имеющая 2 типа комманд: и команды и изменения пинов.
+                    # В таком случае на 1 слово 2 команды выполняться будет. Фиксить надо добавлением к каждому слову флага
+                    threading.Thread(target=writing, args=(command)).start()
+                elif flag == "hand":
+                    threading.Thread(target=changePin, args=(command)).start()
             else:
-                keywords[command]()
+                if command == "exit": exit1()
+                if command == "stop": stop_cmd()
     
     if len(found_commands) == 0:
         print("❌ Unrecognized or partial command.")
