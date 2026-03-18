@@ -1,23 +1,52 @@
 from itertools import zip_longest
-
+import config
 from vosk import Model, KaldiRecognizer
-import pyaudio, json, difflib, time, threading, serial, sys
-
+import pyaudio, json, difflib, time, threading, serial, sys, os
+from pathlib import Path
+import serial.tools.list_ports
 # --- Voice grammar ---
-globalGrammar = '["up", "down", "left", "right", "to me", "from me", "stop", "base", "exit", "arm up", "arm down", "elbow", "hand", "brush", "inner elbow", "shoulder"]'
-commands = ["up", "down", "left", "right", "exit", "from me", "to me", "stop", "arm up", "arm down"]
-handParts = ["base", "hand", "elbow", "brush", "inner elbow", "shoulder"]
-#Хуево подтягиваются слова из словарей
 
-#raspberry_way = '/home/sergey/nano eng model'
-windows_way = 'C:/Users/Student/speech/nano eng model'
+globalGrammar = config.globalGrammar
+commands = config.commands
+handParts = config.handParts
+specialCommands = config.specialCommands
+multiCommands = config.multiCommands
 
-model = Model(windows_way)
+
+#Нужно добавить определение платформы и порта, где ардуино, желательно б это с скриптом установки совместить
+path = Path.home() / "speech" / "nano eng model"
+strpath = str(path)
+print(strpath)
+
+
+model = Model(strpath)
 rec = KaldiRecognizer(model, 16000, globalGrammar)
-usb_port = "COM7"
 
+
+
+# Далее закоментированн код, ибо для дебага использовался ввод из клавиатуры. Если есть микрофон и роборука - можно раскоментировать
 audio = pyaudio.PyAudio()
-#arduino = serial.Serial(usb_port, 9600, timeout=1)
+
+
+def find_arduino():
+    ports = serial.tools.list_ports.comports()
+    for port in ports:
+        if "Arduino" in port.description:
+            return port.device
+
+        # 2. Проверка по VID:PID (для оригинальных плат и некоторых клонов)
+        # VID 0x2341 — официальный ID Arduino
+        if port.vid == 0x2341:
+            return port.device
+
+        # 3. Для дешевых клонов на чипе CH340 (часто определяются так)
+        if "CH340" in port.description or "USB-SERIAL" in port.description:
+            return port.device
+
+    return None
+usb_port = find_arduino()
+#Инциализация роборуки в системе
+# arduino = serial.Serial(usb_port, 9600, timeout=1)
 
 # --- Servo setup ---
 CHUNK = 2048
@@ -26,6 +55,8 @@ angle = 0
 max_angle = 150
 stop = False
 run = False
+
+#Для инициализации прослушивания ввода с микрофона
 
 # stream = audio.open(format=pyaudio.paInt16,
 #    channels=1,
@@ -59,11 +90,12 @@ def readArduino():
 def debug(list):
     for i,j in list:
         print(j)
+
+
+
 stopThread = threading.Event()
 arduinoThread = threading.Thread(target=readArduino, daemon=False)
 arduinoThread.start()
-
-
 
 def stop_cmd():
     global run
@@ -103,33 +135,31 @@ for text in printing():
     print(text)
 
     found_commands = []
-    def checking():
-        words = text.split()
-       # debug(words)
-        for i, j, word in zip_longest(commands, handParts, words): # возможно проблема в зипе относительно проблемы ниже
-            print(f"I: {i}")
-            print(f"J: {j}")
-            if word == i and word != None: # Некорректная проверка, почему то слишком много аппендов
+    for phrase in multiCommands:
+        text = text.replace(phrase, phrase.replace(" ", "_"))
+    words = text.split()
+
+    words = [word.replace("_", " ") for word in words]
+
+    # debug(words)
+    for word in words:
+        for i, j, w in zip_longest(commands, handParts, specialCommands):
+            if word == i:
                 found_commands.append((word, "command"))
-            if word == j and word != None:
-                found_commands.append((word, "hand")) 
+            if word == j:
+                found_commands.append((word, "hand"))
+            if word == w:
+                found_commands.append((word, "special command"))
 
-    checking()
-
-    # 4. Execute command if found
-    debug(found_commands)
     for command, flag in found_commands:
-        if command in globalGrammar:
-            print(f"✅ Command recognized: {command}")
-            if command != "exit" and command != "stop": #Мульти комманды некорректно обрабатываются
-                if flag == "command": # У нас может быть фраза, имеющая 2 типа комманд: и команды и изменения пинов.
-                    # В таком случае на 1 слово 2 команды выполняться будет. Фиксить надо добавлением к каждому слову флага
-                    threading.Thread(target=writing, args=(command)).start()
-                elif flag == "hand":
-                    threading.Thread(target=changePin, args=(command)).start()
-            else:
-                if command == "exit": exit1()
-                if command == "stop": stop_cmd()
+        print(f"✅ Command recognized: {command}")
+        if flag == "command":
+            threading.Thread(target=writing, args=(command,)).start()
+        elif flag == "hand":
+            threading.Thread(target=changePin, args=(command,)).start()
+        elif flag == "special command":
+            if command == "exit": exit1()
+            if command == "stop": stop_cmd()
     
     if len(found_commands) == 0:
         print("❌ Unrecognized or partial command.")
