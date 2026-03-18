@@ -109,10 +109,10 @@ for text in printing():
         for i, j, word in zip_longest(commands, handParts, words): # возможно проблема в зипе относительно проблемы ниже
             print(f"I: {i}")
             print(f"J: {j}")
-            if word == i: # Некорректная проверка, почему то слишком много аппендов
+            if word == i and word != None: # Некорректная проверка, почему то слишком много аппендов
                 found_commands.append((word, "command"))
-            if word == j:
-                found_commands.append((word, "hand")) # Если передавать первым словом, остальные команды не распознаются
+            if word == j and word != None:
+                found_commands.append((word, "hand")) 
 
     checking()
 
