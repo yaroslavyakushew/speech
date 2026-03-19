@@ -77,12 +77,12 @@ def changePin(text):
 
 def readArduino():
     try:
-        global run, keywords
+        global run, keyword
         while not stopThread.is_set():
             line = arduino.readline().decode('utf-8').strip()
             if (line == "run false"):
                 run = False
-                keywords = full_dict
+                globalGrammar = config.globalGrammar
         time.sleep(0.1)
     except Exception as e:
         print("where arduino?")
@@ -97,10 +97,11 @@ stopThread = threading.Event()
 arduinoThread = threading.Thread(target=readArduino, daemon=False)
 arduinoThread.start()
 
-def stop_cmd():
-    global run
+def stop_cmd(): #Поменять стоп для дебага
+    global run, commands
     arduino.write(b"stop\n")
     run = False
+    commands = config.commands
 
 def exit1():
     stopThread.set()
@@ -142,14 +143,16 @@ for text in printing():
     words = [word.replace("_", " ") for word in words]
 
     # debug(words)
-    for word in words:
+    for word in words: #Сломалась смена словарей, стоп комманды не работают. UPD: Нужно проверить решение
         for i, j, w in zip_longest(commands, handParts, specialCommands):
             if word == i:
                 found_commands.append((word, "command"))
+                commands = specialCommands
             if word == j:
                 found_commands.append((word, "hand"))
             if word == w:
                 found_commands.append((word, "special command"))
+
 
     for command, flag in found_commands:
         print(f"✅ Command recognized: {command}")
