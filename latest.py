@@ -45,7 +45,7 @@ def find_arduino():
 
     return None
 usb_port = find_arduino()
-#Инциализация роборуки в системе
+#Инциализация порта для отправления команд на роборуку в системе
 # arduino = serial.Serial(usb_port, 9600, timeout=1)
 
 # --- Servo setup ---

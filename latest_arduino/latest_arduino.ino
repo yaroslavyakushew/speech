@@ -17,15 +17,17 @@ class MyServo {
     int min_angle;
     int pin;
     int delay_ms;
+    String flag; 
     unsigned long prev = 0;
     bool run1 = false;
    
-    MyServo(int p, int min_a, int max_a, int d) {
+    MyServo(int p, int min_a, int max_a, int d, string f) {
       pin = p;
       min_angle = min_a;
       max_angle = max_a;
       angle = min_angle;
       delay_ms = d;
+      flag = f
     }
 
     void attach1() {
@@ -86,13 +88,13 @@ class MyServo {
 };
 
 // !create a list of classes and insert all existing classes into it!
-MyServo kleshnya(16, 0, 160, 15); //Стискати кулак
-MyServo kist_rotary(5, 0, 180, 15); //Крутить кулачок
-MyServo kist_bend(4, 0, 100, 15); //2 изгиб локтя
-MyServo shoulder(0, 110, 180, 15); //Локоть
-MyServo collarbone(14, 0, 180, 15); //Основание
+MyServo kleshnya(16, 0, 160, 15, "kleshnya"); //Стискати кулак
+MyServo kist_rotary(5, 0, 180, 15, "hand"); //Крутить кулачок
+MyServo kist_bend(4, 0, 100, 15, "inner elbow"); //2 изгиб локтя
+MyServo shoulder(0, 110, 180, 15, "elbow"); //Локоть
+MyServo collarbone(14, 0, 180, 15, "base"); //Основание
 
-MyServo guohu(12, 0, 90, 30);
+MyServo guohu(12, 0, 90, 30); //?
 
 MyServo* classList[] = {&kleshnya, &kist_rotary, &kist_bend, &shoulder, &collarbone, &guohu};
 void (*softReset) (void) = 0;
@@ -108,29 +110,21 @@ void voiceCommand(String word1) {
     schedule_function(+[](){shoulder.down();});
     schedule_function(+[](){kist_bend.down();});
    }
+   
+   for (auto i: classList){
+       if (word1 == i.flag) {
+           curServo = i.pin
+       }
+    }
+   
    else if (word1 == "stop"){
       stop1 = true;
-   }
-   else if (word1 == "collarbone"){
-      curServo = 14; 
-   }
-   else if (word1 == "elbow"){
-      curServo = 0; 
-   }
-   else if (word1 == "hand"){
-      curServo = 16; 
-   }
-   else if (word1 == "inner elbow"){
-      curServo = 4; 
    }
    else if (word1 == "right"){
       kist_rotary.up(); 
    }
    else if (word1 == "left"){
       kist_rotary.down();
-   }
-   else if (word1 == "shoulder"){
-      curServo = 12; 
    }
    else if (word1 == "up"){
     Serial.println("up");
