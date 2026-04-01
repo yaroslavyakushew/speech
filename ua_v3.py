@@ -1,5 +1,5 @@
 from itertools import zip_longest
-import config
+import ukrconfig as config
 from vosk import Model, KaldiRecognizer
 import pyaudio, json, difflib, time, threading, serial, sys, os
 from pathlib import Path
@@ -14,7 +14,7 @@ multiCommands = config.multiCommands
 
 
 #Нужно добавить определение платформы и порта, где ардуино, желательно б это с скриптом установки совместить
-path = Path.home() / "speech" / "nano eng model"
+path = Path.home() / "speech" / "nano ukr model"
 strpath = str(path)
 print(strpath)
 
@@ -145,18 +145,16 @@ for text in printing():
     words = [word.replace("_", " ") for word in words]
 
     # debug(words)
-    for word in words: #Сломалась смена словарей, стоп комманды не работают. UPD: Нужно проверить решение
-        for i, j, w in zip_longest(commands, handParts, specialCommands):
-            if word == i and word != "старт":
-                found_commands.append((word, "command"))
-                commands = specialCommands
-            if word == j and word != "старт":
-                found_commands.append((word, "hand"))
-            if word == w and word != "старт":
-                found_commands.append((word, "special command"))
-            if word == "старт":
-                found_commands.append((word, "start"))
-
+    for word in words:
+        if word in commands and word != "старт":
+            found_commands.append((word, "command"))
+            commands = ["півавіаіуцвац"]
+        if word in handParts and word != "старт":
+            found_commands.append((word, "hand"))
+        if word in specialCommands and word != "старт":
+            found_commands.append((word, "special command"))
+        if word == "старт":
+            found_commands.append((word, "start"))
 
 
     for command, flag in found_commands:
@@ -166,8 +164,8 @@ for text in printing():
         elif flag == "hand":
             threading.Thread(target=changePin, args=(command,)).start()
         elif flag == "special command":
-            if command == "exit": exit1()
-            if command == "stop": stop_cmd()
+            if command == "вихід": exit1()
+            elif command == "стоп": stop_cmd()
         elif flag == "start":
             start()
     

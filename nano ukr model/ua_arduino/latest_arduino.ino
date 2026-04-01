@@ -21,13 +21,13 @@ class MyServo {
     unsigned long prev = 0;
     bool run1 = false;
    
-    MyServo(int p, int min_a, int max_a, int d, String f) {
+    MyServo(int p, int min_a, int max_a, int d, string f) {
       pin = p;
       min_angle = min_a;
       max_angle = max_a;
       angle = min_angle;
       delay_ms = d;
-      flag = f;
+      flag = f
     }
 
     void attach1() {
@@ -94,7 +94,7 @@ MyServo kist_bend(4, 0, 100, 15, "inner elbow"); //2 изгиб локтя
 MyServo shoulder(0, 110, 180, 15, "elbow"); //Локоть
 MyServo collarbone(14, 0, 180, 15, "base"); //Основание
 
-MyServo guohu(12, 0, 90, 30, "shoulder"); //?
+MyServo guohu(12, 0, 90, 30); //?
 
 MyServo* classList[] = {&kleshnya, &kist_rotary, &kist_bend, &shoulder, &collarbone, &guohu};
 void (*softReset) (void) = 0;

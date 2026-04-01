@@ -88,24 +88,24 @@ class MyServo {
 };
 
 // !create a list of classes and insert all existing classes into it!
-MyServo kleshnya(16, 0, 160, 15, "kleshnya"); //Стискати кулак
-MyServo kist_rotary(5, 0, 180, 15, "hand"); //Крутить кулачок
-MyServo kist_bend(4, 0, 100, 15, "inner elbow"); //2 изгиб локтя
-MyServo shoulder(0, 110, 180, 15, "elbow"); //Локоть
-MyServo collarbone(14, 0, 180, 15, "base"); //Основание
+MyServo kleshnya(16, 0, 160, 15, "клешня"); //Стискати кулак
+MyServo kist_rotary(5, 0, 180, 15, "вфафва"); //Крутить кулачок
+MyServo kist_bend(4, 0, 100, 15, "внутрішній лікоть"); //2 изгиб локтя
+MyServo shoulder(0, 110, 180, 15, "лікоть"); //Локоть
+MyServo collarbone(14, 0, 180, 15, "база"); //Основание
 
-MyServo guohu(12, 0, 90, 30, "shoulder"); //?
+MyServo guohu(12, 0, 90, 30, "плече"); //?
 
 MyServo* classList[] = {&kleshnya, &kist_rotary, &kist_bend, &shoulder, &collarbone, &guohu};
 void (*softReset) (void) = 0;
 
 void voiceCommand(String word1) {
-   if (word1 == "arm up") {
+   if (word1 == "рука вгору") {
          schedule_function(+[](){guohu.up();});
          schedule_function(+[](){shoulder.up();});
          schedule_function(+[](){kist_bend.up();});
    }
-   else if (word1 == "arm down"){
+   else if (word1 == "рука вниз"){
     schedule_function(+[](){guohu.down();});
     schedule_function(+[](){shoulder.down();});
     schedule_function(+[](){kist_bend.down();});
@@ -117,16 +117,16 @@ void voiceCommand(String word1) {
        }
     }
    
-   else if (word1 == "stop"){
+   else if (word1 == "стоп"){
       stop1 = true;
    }
-   else if (word1 == "right"){
+   else if (word1 == "вправо"){
       kist_rotary.up(); 
    }
-   else if (word1 == "left"){
+   else if (word1 == "вліво"){
       kist_rotary.down();
    }
-   else if (word1 == "up"){
+   else if (word1 == "вгору"){
     Serial.println("up");
      for (auto obj: classList){
         if (curServo == obj->pin){
@@ -134,7 +134,7 @@ void voiceCommand(String word1) {
         }
       }
    }
-   else if (word1 == "down"){
+   else if (word1 == "вниз"){
      Serial.println("down");
      for (auto obj: classList){
         if (curServo == obj->pin){
